@@ -6,23 +6,23 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
 # ----------------------------------------------------------------------
 
-import unittest2 as unittest
+import unittest
 
-from nupic.data.pattern_machine import PatternMachine
+from nupic.data.generators.pattern_machine import PatternMachine
 
 from nupic.test.abstract_temporal_memory_test import AbstractTemporalMemoryTest
 
@@ -506,6 +506,57 @@ class ExtensiveTemporalMemoryTest(AbstractTemporalMemoryTest):
     self.assertTrue(unpredictedActiveColumnsMetric.mean < 3)
 
 
+  def testH10(self):
+    """Orphan Decay mechanism reduce predicted inactive cells (extra predictions).
+    Test feeds in noisy sequences (X = 0.05) to TM with and without orphan decay.
+    TM with orphan decay should has many fewer predicted inactive columns.
+    Parameters the same as B11, and sequences like H9."""
+
+    # train TM on noisy sequences with orphan decay turned off
+    self.init({"cellsPerColumn": 4,
+               "activationThreshold": 8})
+
+    numbers = self.sequenceMachine.generateNumbers(2, 20, (10, 15))
+    sequence = self.sequenceMachine.generateFromNumbers(numbers)
+
+    sequenceNoisy = dict()
+    for i in xrange(10):
+      sequenceNoisy[i] = self.sequenceMachine.addSpatialNoise(sequence, 0.05)
+      self.feedTM(sequenceNoisy[i])
+    self.tm.mmClearHistory()
+
+    self._testTM(sequence)
+
+    predictedInactiveColumnsMetric = self.tm.mmGetMetricFromTrace(
+      self.tm.mmGetTracePredictedInactiveColumns())
+    predictedActiveColumnsMetric = self.tm.mmGetMetricFromTrace(
+      self.tm.mmGetTracePredictedActiveColumns())
+
+    predictedInactiveColumnsMeanNoOrphanDecay = predictedInactiveColumnsMetric.mean
+    predictedActiveColumnsMeanNoOrphanDecay = predictedActiveColumnsMetric.mean
+
+    # train TM on the same set of noisy sequences with orphan decay turned on
+    self.init({"cellsPerColumn": 4,
+               "activationThreshold": 8,
+               "predictedSegmentDecrement": 0.04})
+
+    for i in xrange(10):
+      self.feedTM(sequenceNoisy[i])
+    self.tm.mmClearHistory()
+
+    self._testTM(sequence)
+
+    predictedInactiveColumnsMetric = self.tm.mmGetMetricFromTrace(
+      self.tm.mmGetTracePredictedInactiveColumns())
+    predictedActiveColumnsMetric = self.tm.mmGetMetricFromTrace(
+      self.tm.mmGetTracePredictedActiveColumns())
+
+    predictedInactiveColumnsMeanOrphanDecay = predictedInactiveColumnsMetric.mean
+    predictedActiveColumnsMeanOrphanDecay = predictedActiveColumnsMetric.mean
+
+    self.assertGreater(predictedInactiveColumnsMeanNoOrphanDecay, 0)
+    self.assertGreater(predictedInactiveColumnsMeanNoOrphanDecay, predictedInactiveColumnsMeanOrphanDecay)
+    self.assertAlmostEqual(predictedActiveColumnsMeanNoOrphanDecay, predictedActiveColumnsMeanOrphanDecay)
   # ==============================
   # Overrides
   # ==============================

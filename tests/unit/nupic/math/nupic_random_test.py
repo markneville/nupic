@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -27,7 +27,7 @@ import unittest
 
 import numpy
 
-from nupic.bindings.math import Random, StdRandom
+from nupic.bindings.math import Random
 
 
 
@@ -66,27 +66,6 @@ class TestNupicRandom(unittest.TestCase):
                         "NuPIC random gave the same result twice?!?")
 
 
-  def testStdRandomStateFunctions(self):
-    """Test the NuPIC StdRandom to make sure getstate / setstate works."""
-    sr = StdRandom(43)
-
-    srState = sr.getstate()
-    r1 = sr.random()
-    r2 = sr.random()
-    sr.setstate(srState)
-
-    self.assertEqual(sr.random(), r1)
-    self.assertEqual(sr.random(), r2)
-
-    srState = sr.getstate()
-    r1 = sr.random()
-    r2 = sr.random()
-    sr.setstate(srState)
-
-    self.assertEqual(sr.random(), r1)
-    self.assertEqual(sr.random(), r2)
-
-
   def testSample(self):
     r = Random(42)
     population = numpy.array([1, 2, 3, 4], dtype="uint32")
@@ -94,8 +73,8 @@ class TestNupicRandom(unittest.TestCase):
 
     r.sample(population, choices)
 
-    self.assertEqual(choices[0], 2)
-    self.assertEqual(choices[1], 4)
+    self.assertEqual(choices[0], 1)
+    self.assertEqual(choices[1], 3)
 
 
   def testSampleNone(self):
@@ -183,10 +162,10 @@ class TestNupicRandom(unittest.TestCase):
 
     r.shuffle(arr)
 
-    self.assertEqual(arr[0], 3)
-    self.assertEqual(arr[1], 2)
-    self.assertEqual(arr[2], 4)
-    self.assertEqual(arr[3], 1)
+    self.assertEqual(arr[0], 1)
+    self.assertEqual(arr[1], 4)
+    self.assertEqual(arr[2], 3)
+    self.assertEqual(arr[3], 2)
 
 
   def testShuffleEmpty(self):

@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -38,9 +38,7 @@ class NetworkTest(unittest.TestCase):
     with self.assertRaises(Exception) as cm:
       n.addRegion('r', 'py.NonExistingNode', '')
 
-    self.assertEqual(cm.exception.message,
-                     "Matching Python module for " +
-                     "py.NonExistingNode not found.")
+    self.assertEqual(cm.exception.message, "Matching Python module for NonExistingNode not found.")
 
     orig_import = __import__
     def import_mock(name, *args):
@@ -54,15 +52,13 @@ class NetworkTest(unittest.TestCase):
       with self.assertRaises(Exception) as cm:
         n.addRegion('r', 'py.UnimportableNode', '')
 
-      self.assertEqual(str(cm.exception),
-        'invalid syntax (UnimportableNode.py, line 5)')
+      self.assertEqual(cm.exception.message, "invalid syntax (UnimportableNode.py, line 5)")
 
     # Test failure in the __init__() method
     with self.assertRaises(Exception) as cm:
       n.addRegion('r', 'py.TestNode', '{ failInInit: 1 }')
 
-    self.assertEqual(str(cm.exception),
-      'TestNode.__init__() Failing on purpose as requested')
+    self.assertEqual(cm.exception.message, "TestNode.__init__() Failing on purpose as requested")
 
     # Test failure inside the compute() method
     with self.assertRaises(Exception) as cm:

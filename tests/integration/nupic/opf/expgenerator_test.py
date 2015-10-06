@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -31,23 +31,26 @@ import shutil
 import string
 import subprocess
 import sys
+
+from pkg_resources import resource_filename
 import unittest2 as unittest
 
-from nupic.data import dictutils
 from nupic.database.ClientJobsDAO import ClientJobsDAO
 from nupic.support import aggregationDivide
 from nupic.support.unittesthelpers.testcasebase import (
   TestCaseBase as HelperTestCaseBase)
 from nupic.swarming import HypersearchWorker
 from nupic.swarming.permutationhelpers import PermuteChoices
-from nupic.swarming.utils import generatePersistentJobGUID
+from nupic.swarming.hypersearch.utils import generatePersistentJobGUID, \
+                                             rCopy
 from nupic.frameworks.opf.expdescriptionapi import OpfEnvironment
-from nupic.frameworks.opf.exp_generator import ExpGenerator
+from nupic.swarming.exp_generator import ExpGenerator
 from nupic.frameworks.opf.opfutils import (InferenceType,
                                            InferenceElement)
 
 LOGGER = logging.getLogger(__name__)
-
+HOTGYM_INPUT = resource_filename("nupic.datafiles",
+                                  os.path.join("extra", "hotgym", "hotgym.csv"))
 
 
 g_debug = False
@@ -85,10 +88,6 @@ class MyTestEnvironment(object):
     LOGGER.info("Generating experiment description files in: %s", \
                   os.path.abspath(self.testOutDir))
 
-    # Where to find out datasets
-    self.datasetSrcDir = os.path.join(installRootDir, "examples", "prediction", \
-      "data", "extra")
-
 
   def cleanUp(self):
     shutil.rmtree(self.testOutDir, ignore_errors=True)
@@ -120,7 +119,7 @@ class ExperimentTestBaseClass(HelperTestCaseBase):
     global g_myEnv
     if not g_myEnv:
       # Setup environment
-      params = type('obj', (object,), {'installDir' : os.environ['NUPIC']})
+      params = type('obj', (object,), {'installDir' : resource_filename("nupic", "")})
       g_myEnv = MyTestEnvironment(params)
 
 
@@ -305,7 +304,7 @@ class ExperimentTestBaseClass(HelperTestCaseBase):
                      expDesc['inferenceArgs']['predictionSteps'])
     #self.assertEqual(base.config['modelParams']['clParams']['steps'],
     #                 '%s' % (predictionSteps))
-    tmpAggregationInfo = dictutils.rCopy(
+    tmpAggregationInfo = rCopy(
         base.config['aggregationInfo'],
         lambda value, _: value)
     tmpAggregationInfo.pop('fields')
@@ -414,12 +413,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -517,13 +515,13 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
     # =========================================================================
     # Test category predicted field
     # =========================================================================
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "nfl", "qa_nfl.csv")
     streamDef = dict(
       version = 1,
       info = "test_category_predicted_field",
       streams = [
-        dict(source="file://%s" % (dataPath),
-             info="nfl.csv",
+        # It doesn't matter if this stream source points to a real place or not.
+        dict(source="file://dummy",
+             info="dummy.csv",
              columns=["*"]),
         ],
     )
@@ -582,12 +580,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -766,12 +763,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "TestAggregation",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
       ],
@@ -869,12 +865,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -933,13 +928,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
-
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -979,12 +972,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"],
              last_record=20),
@@ -1200,13 +1192,12 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
   def test_DeltaEncoders(self):
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
 
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -1302,12 +1293,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
       })
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"],
              last_record=10),
@@ -1426,12 +1416,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -1563,12 +1552,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -1619,12 +1607,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
 
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -1676,12 +1663,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
     """
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"]),
         ],
@@ -1745,12 +1731,11 @@ class PositiveExperimentTests(ExperimentTestBaseClass):
     """
 
     # Form the stream definition
-    dataPath = os.path.join(g_myEnv.datasetSrcDir, "hotgym", "hotgym.csv")
     streamDef = dict(
       version = 1,
       info = "test_NoProviders",
       streams = [
-        dict(source="file://%s" % (dataPath),
+        dict(source="file://%s" % HOTGYM_INPUT,
              info="hotGym.csv",
              columns=["*"],
              last_record=10),
@@ -1962,9 +1947,10 @@ if __name__ == '__main__':
 
   # Our custom options (that don't get passed to unittest):
   customOptions = ['--installDir', '--verbosity', '--logLevel']
-  parser.add_option(
-    "--installDir", dest="installDir", default=os.environ['NUPIC'],
-    help="Path to the NTA install directory [default: %default].")
+
+  parser.add_option("--installDir", dest="installDir",
+        default=resource_filename("nupic", ""),
+        help="Path to the NTA install directory [default: %default].")
 
   parser.add_option("--verbosity", default=0, type="int",
         help="Verbosity level, either 0, 1, 2, or 3 [default: %default].")

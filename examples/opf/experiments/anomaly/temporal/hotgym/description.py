@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -177,15 +177,15 @@ config = {
             # SP inhibition control (absolute value);
             # Maximum number of active columns in the SP region's output (when
             # there are more, the weaker ones are suppressed)
-            'numActivePerInhArea': 40,
+            'numActiveColumnsPerInhArea': 40,
 
             'seed': 1956,
 
-            # coincInputPoolPct
+            # potentialPct
             # What percent of the columns's receptive field is available
             # for potential synapses. At initialization time, we will
-            # choose coincInputPoolPct * (2*coincInputRadius+1)^2
-            'coincInputPoolPct': 0.5,
+            # choose potentialPct * (2*potentialRadius+1)^2
+            'potentialPct': 0.5,
 
             # The default connected threshold. Any synapse whose
             # permanence value is above the connected threshold is
@@ -201,8 +201,6 @@ config = {
             'synPermActiveInc': 0.1,
 
             'synPermInactiveDec': 0.01,
-
-            'randomSP': 1
         },
 
         # Controls whether TP is enabled or disabled;
@@ -316,6 +314,11 @@ config = {
 
         },
 
+        'anomalyParams': {
+           'mode': 'likelihood', # pure(=default) / weighted / likelihood
+           'slidingWindowSize': 5, # >=0 / None
+        },
+
         'trainSPNetOnlyIfRequested': False,
     },
 
@@ -406,7 +409,6 @@ for steps in config['predictionSteps']:
                  params={'errorMetric': 'altMAPE', 'window': 1000, 'steps': steps}))
 
 
-################################################################################
-################################################################################
+
 descriptionInterface = ExperimentDescriptionAPI(modelConfig=config,
                                                 control=control)

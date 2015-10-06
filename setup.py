@@ -1,163 +1,101 @@
-import shutil
-import sys
+# ----------------------------------------------------------------------
+# Numenta Platform for Intelligent Computing (NuPIC)
+# Copyright (C) 2015, Numenta, Inc.  Unless you have an agreement
+# with Numenta, Inc., for a separate license for this software code, the
+# following terms and conditions apply:
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the GNU Affero Public License for more details.
+#
+# You should have received a copy of the GNU Affero Public License
+# along with this program.  If not, see http://www.gnu.org/licenses.
+#
+# http://numenta.org/licenses/
+# ----------------------------------------------------------------------
+
+"""Installation script for Python nupic package."""
+
 import os
-import subprocess
-from setuptools import setup
+import setuptools
+import sys
 
-"""
-This file only will call CMake process to generate scripts, build, and then
-install the NuPIC binaries. ANY EXTRA code related to build process MUST be
-put into CMake file.
-"""
+from setuptools import setup, find_packages, Extension
 
-repositoryDir = os.getcwd()
-
-
-# Read command line options looking for extra options for CMake and Make
-# For example, an user could type:
-#   python setup.py install make_options="-j3"
-# which will add "-j3" option to Make commandline
-cmakeOptions = ""
-makeOptions = "install"
-setupOptions = ""
-mustBuildExtensions = False
-requirementsFile = "external/common/requirements.txt"
-
-for arg in sys.argv[:]:
-  if ("cmake_options" in arg) or ("make_options" in arg):
-    (option, _, rhs) = arg.partition("=")
-    if option == "--cmake_options":
-      cmakeOptions = rhs
-      sys.argv.remove(arg)
-    if option == "--make_options":
-      makeOptions = makeOptions + " " + rhs
-      sys.argv.remove(arg)
-  elif not "setup.py" in arg:
-    if ("build" in arg) or ("install" in arg):
-      mustBuildExtensions = True
-    setupOptions += arg + " "
-
-
-# Check if no option was passed, i.e. if "setup.py" is the only option
-# If True, "develop" is passed by default
-# This is useful when a developer wish build the project directly from an IDE
-if len(sys.argv) == 1:
-  print "No command passed. Using 'develop' as default command. Use " \
-        "'python setup.py --help' for more information."
-  sys.argv.append("develop")
-  mustBuildExtensions = True
-
-
-# Get version from local file.
-version = None
-with open("VERSION", "r") as versionFile:
-  version = versionFile.read().strip()
+REPO_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 
-def findPackages(repositoryDir):
+def getVersion():
   """
-  Traverse nupic directory and create packages for each subdir containing a
-  __init__.py file
+  Get version from local file.
   """
-  packages = []
-  for root, _, files in os.walk(repositoryDir + "/nupic"):
-    if "__init__.py" in files:
-      subdir = root.replace(repositoryDir + "/", "")
-      packages.append(subdir.replace("/", "."))
-  return packages
+  with open(os.path.join(REPO_DIR, "VERSION"), "r") as versionFile:
+    return versionFile.read().strip()
 
 
 
-def findRequirements(repositoryDir):
+def parse_file(requirementFile):
+  try:
+    return [
+      line.strip()
+      for line in open(requirementFile).readlines()
+      if not line.startswith("#")
+    ]
+  except IOError:
+    return []
+
+
+
+def findRequirements():
   """
   Read the requirements.txt file and parse into requirements for setup's
   install_requirements option.
   """
-  requirementsPath = os.path.join(repositoryDir, requirementsFile)
-  return [
-    line.strip()
-    for line in open(requirementsPath).readlines()
-    if not line.startswith("#")
-  ]
+  requirementsPath = os.path.join(REPO_DIR, "external", "common",
+                                  "requirements.txt")
+  requirements = parse_file(requirementsPath)
+
+  return requirements
 
 
 
-def buildExtensionsNupic():
-  """
-  CMake-specific build operations
-  """
+if __name__ == "__main__":
+  requirements = findRequirements()
 
-  # Prepare directories to the CMake process
-  sourceDir = repositoryDir
-  buildScriptsDir = repositoryDir + "/build/scripts"
-  if os.path.exists(buildScriptsDir):
-    shutil.rmtree(buildScriptsDir)
-  os.makedirs(buildScriptsDir)
-  os.chdir(buildScriptsDir)
-
-  # Generate build files with CMake
-  returnCode = subprocess.call(
-    "cmake %s %s" % (sourceDir, cmakeOptions), shell=True
-  )
-  if returnCode != 0:
-    sys.exit("Unable to generate build scripts!")
-
-  # Build library with Make
-  returnCode = subprocess.call("make " + makeOptions, shell=True)
-  if returnCode != 0:
-    sys.exit("Unable to build the library!")
-
-
-
-def setupNupic():
-  """
-  Package setup operations
-  """
-
-  packages = findPackages(repositoryDir)
-  requires = findRequirements(repositoryDir)
-
-  # Setup library
-  os.chdir(repositoryDir)
   setup(
-    name = "nupic",
-    version = version,
-    packages = packages,
-    install_requires = requires,
-    # A lot of this stuff may not be packaged properly, most of it was added in
-    # an effort to get a binary package prepared for nupic.regression testing
-    # on Travis-CI, but it wasn't done the right way. I'll be refactoring a lot
-    # of this for https://github.com/numenta/nupic/issues/408, so this will be
-    # changing soon. -- Matt
-    package_data = {
+    name="nupic",
+    version=getVersion(),
+    install_requires=requirements,
+    package_dir = {"": "src"},
+    packages=find_packages("src"),
+    namespace_packages = ["nupic"],
+    package_data={
       "nupic.support": ["nupic-default.xml",
                         "nupic-logging.conf"],
-      "nupic": ["README.md", "LICENSE.txt",
-                "CMakeLists.txt", "*.so", "*.dll", "*.dylib"],
-      "nupic.bindings": ["_*.so", "_*.dll", "*.i"],
+      "nupic": ["README.md", "LICENSE.txt"],
       "nupic.data": ["*.json"],
       "nupic.frameworks.opf.exp_generator": ["*.json", "*.tpl"],
       "nupic.frameworks.opf.jsonschema": ["*.json"],
-      "nupic.support.resources.images": ["*.png", "*.gif",
-                                         "*.ico", "*.graffle"],
-      "nupic.swarming.jsonschema": ["*.json"]
+      "nupic.swarming.exp_generator": ["*.json", "*.tpl"],
+      "nupic.swarming.jsonschema": ["*.json"],
+      "nupic.datafiles": ["*.csv", "*.txt"],
     },
-    data_files=[
-      ("", [
-        "CMakeLists.txt",
-        ]
-      )
-    ],
-    include_package_data = True,
-    description = "Numenta Platform for Intelligent Computing",
+    include_package_data=True,
+    zip_safe=False,
+    description="Numenta Platform for Intelligent Computing",
     author="Numenta",
     author_email="help@numenta.org",
     url="https://github.com/numenta/nupic",
     classifiers=[
       "Programming Language :: Python",
       "Programming Language :: Python :: 2",
-      "License :: OSI Approved :: GNU General Public License (GPL)",
+      "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
       "Operating System :: MacOS :: MacOS X",
       "Operating System :: POSIX :: Linux",
       # It has to be "5 - Production/Stable" or else pypi rejects it!
@@ -166,16 +104,14 @@ def setupNupic():
       "Intended Audience :: Science/Research",
       "Topic :: Scientific/Engineering :: Artificial Intelligence"
     ],
-    long_description = """\
-Numenta Platform for Intelligent Computing: a machine intelligence platform that implements the HTM learning algorithms. HTM is a detailed computational theory of the neocortex. At the core of HTM are time-based continuous learning algorithms that store and recall spatial and temporal patterns. NuPIC is suited to a variety of problems, particularly anomaly detection and prediction of streaming data sources.
-
-For more information, see http://numenta.org or the NuPIC wiki at https://github.com/numenta/nupic/wiki.
-"""
+    long_description=(
+        "Numenta Platform for Intelligent Computing: a machine intelligence "
+        "platform that implements the HTM learning algorithms. HTM is a "
+        "detailed computational theory of the neocortex. At the core of HTM "
+        "are time-based continuous learning algorithms that store and recall "
+        "spatial and temporal patterns. NuPIC is suited to a variety of "
+        "problems, particularly anomaly detection and prediction of streaming "
+        "data sources.\n\n"
+        "For more information, see http://numenta.org or the NuPIC wiki at "
+        "https://github.com/numenta/nupic/wiki.")
   )
-
-
-
-# Build and setup NuPIC
-if mustBuildExtensions:
-  buildExtensionsNupic()
-setupNupic()

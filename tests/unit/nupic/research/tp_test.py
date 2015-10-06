@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -132,9 +132,9 @@ class TPTest(unittest.TestCase):
   def testCheckpointMiddleOfSequence2(self):
     """More complex test of checkpointing in the middle of a sequence."""
     tp1 = TP(2048, 32, 0.21, 0.5, 11, 20, 0.1, 0.1, 1.0, 0.0, 14, False, 5, 2,
-             False, 1960, 0, False, '', 3, 10, 5, 0, 32, 128, 32, 'normal')
+             False, 1960, 0, False, 3, 10, 5, 0, 32, 128, 32, 'normal')
     tp2 = TP(2048, 32, 0.21, 0.5, 11, 20, 0.1, 0.1, 1.0, 0.0, 14, False, 5, 2,
-             False, 1960, 0, False, '', 3, 10, 5, 0, 32, 128, 32, 'normal')
+             False, 1960, 0, False, 3, 10, 5, 0, 32, 128, 32, 'normal')
 
     with open(resource_filename(__name__, 'data/tp_input.csv'), 'r') as fin:
       reader = csv.reader(fin)
