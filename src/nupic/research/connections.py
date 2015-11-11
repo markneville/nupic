@@ -46,18 +46,13 @@ class Connections(object):
   """
 
 
-  def __init__(self,
-               numCells,
-               maxSegmentsPerCell=255,
-               maxSynapsesPerSegment=255):
+  def __init__(self, numCells):
     """
     @param numCells (int) Number of cells in collection
     """
 
     # Save member variables
     self.numCells = numCells
-    self.maxSegmentsPerCell = maxSegmentsPerCell
-    self.maxSynapsesPerSegment = maxSynapsesPerSegment
 
     # Mappings
     self._segments = dict()

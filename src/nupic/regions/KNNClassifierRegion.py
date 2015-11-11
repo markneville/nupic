@@ -232,7 +232,7 @@ class KNNClassifierRegion(PyRegion):
             dataType="Byte",
             count=0,
             constraints='enum: norm, rawOverlap, pctOverlapOfLarger, '
-              'pctOverlapOfProto, pctOverlapOfInput',
+              'pctOverlapOfProto',
             defaultValue='norm',
             accessMode='ReadWrite'),
 

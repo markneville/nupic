@@ -1422,20 +1422,12 @@ class SpatialPooler(object):
     @return list with indices of the winning columns
     """
     #calculate num active per inhibition area
+
     numActive = int(density * self._numColumns)
-
-    # argpartition returns an array where all values to the left of index
-    # numActive are less than or equal to all values to its right. Negating
-    # overlaps produces a descending-order partition.
-    winnerIndices = numpy.argpartition(-overlaps, numActive)[:numActive]
-
-    # Compatibility with nupic.core requires that the winners are sorted;
-    # however, sorting only the winners is far less expensive than sorting all
-    # columns.
-    winnerValues = overlaps[winnerIndices]
-    sortedWinnerIndices = winnerIndices[numpy.argsort(-winnerValues)]
-
-    return sortedWinnerIndices
+    winners = sorted(range(overlaps.size),
+                     key=lambda k: overlaps[k],
+                     reverse=True)[0:numActive]
+    return winners
 
 
   def _inhibitColumnsLocal(self, overlaps, density):
@@ -1618,10 +1610,8 @@ class SpatialPooler(object):
 
       rangeND.append(numpy.unique(curRange))
 
-    neighbors = numpy.ravel_multi_index(
-      numpy.array(list(itertools.product(*rangeND))).T, 
-      dimensions).tolist()
-
+    neighbors = [numpy.ravel_multi_index(coord, dimensions) for coord in
+      itertools.product(*rangeND)]
     neighbors.remove(columnIndex)
     return neighbors
 

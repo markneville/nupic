@@ -51,8 +51,6 @@ class TemporalMemory(object):
                permanenceIncrement=0.10,
                permanenceDecrement=0.10,
                predictedSegmentDecrement=0.0,
-               maxSegmentsPerCell=255,
-               maxSynapsesPerSegment=255,
                seed=42):
     """
     @param columnDimensions          (list)  Dimensions of the column space
@@ -95,9 +93,7 @@ class TemporalMemory(object):
     self.permanenceDecrement = permanenceDecrement
     self.predictedSegmentDecrement = predictedSegmentDecrement
     # Initialize member variables
-    self.connections = Connections(self.numberOfCells(),
-                                   maxSegmentsPerCell=maxSegmentsPerCell,
-                                   maxSynapsesPerSegment=maxSynapsesPerSegment)
+    self.connections = Connections(self.numberOfCells())
     self._random = Random(seed)
 
     self.activeCells = set()

@@ -90,7 +90,7 @@ _ALL_RETRIABLE_ERROR_CODES = set(_RETRIABLE_CLIENT_ERROR_CODES +
 
 
 
-def retrySQL(timeoutSec=60*5, logger=None):
+def retrySQL(timeoutSec=60*5, getLoggerCallback=logging.getLogger):
   """ Return a closure suitable for use as a decorator for
   retrying a pymysql DAO function on certain failures that warrant retries (
   e.g., RDS/MySQL server down temporarily, transaction deadlock, etc.).
@@ -101,7 +101,9 @@ def retrySQL(timeoutSec=60*5, logger=None):
   
   timeoutSec:       How many seconds from time of initial call to stop retrying
                      (floating point)
-  logger:           User-supplied logger instance.
+  getLoggerCallback:
+                    user-supplied callback function that takes no args and
+                     returns the logger instance to use for logging.
 
   Usage Example:
     NOTE: logging must be initialized *before* any loggers are created, else
@@ -111,31 +113,28 @@ def retrySQL(timeoutSec=60*5, logger=None):
     def jobInfo(self, jobID):
         ...
   """
-
-  if logger is None:
-    logger = logging.getLogger(__name__)
-
+  
   def retryFilter(e, args, kwargs):
-
+    
     if isinstance(e, (pymysql.InternalError, pymysql.OperationalError)):
       if e.args and e.args[0] in _ALL_RETRIABLE_ERROR_CODES:
         return True
-
+      
     elif isinstance(e, pymysql.Error):
       if (e.args and
           inspect.isclass(e.args[0]) and issubclass(e.args[0], socket_error)):
         return True
-
+      
     return False
-
-
+  
+  
   retryExceptions = tuple([
     pymysql.InternalError,
     pymysql.OperationalError,
     pymysql.Error,
   ])
-
+  
   return make_retry_decorator(
     timeoutSec=timeoutSec, initialRetryDelaySec=0.1, maxRetryDelaySec=10,
     retryExceptions=retryExceptions, retryFilter=retryFilter,
-    logger=logger)
+    getLoggerCallback=getLoggerCallback)

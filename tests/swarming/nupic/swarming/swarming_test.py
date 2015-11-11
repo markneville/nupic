@@ -138,7 +138,7 @@ class ExperimentTestBaseClass(HelperTestCaseBase):
     
     # If already have a path, concatenate to it
     if "NTA_DATA_PATH" in env:
-      newPath = "%s%s%s" % (env["NTA_DATA_PATH"], os.pathsep, g_myEnv.testSrcDataDir)
+      newPath = "%s:%s" % (env["NTA_DATA_PATH"], g_myEnv.testSrcDataDir)
     else:
       newPath = g_myEnv.testSrcDataDir
       
@@ -156,11 +156,12 @@ class ExperimentTestBaseClass(HelperTestCaseBase):
     
     """
 
-    workers = []
+    workers = []    
     for i in range(numWorkers):
+      args = ["bash", "-c", cmdLine]
       stdout = tempfile.TemporaryFile()
       stderr = tempfile.TemporaryFile()
-      p = subprocess.Popen(cmdLine, bufsize=1, env=os.environ, shell=True,
+      p = subprocess.Popen(args, bufsize=1, env=os.environ, shell=False,
                            stdin=None, stdout=stdout, stderr=stderr)
       workers.append(p)
       
@@ -230,8 +231,8 @@ class ExperimentTestBaseClass(HelperTestCaseBase):
       descriptionPyPath = os.path.join(expDirectory, "description.py")
       permutationsPyPath = os.path.join(expDirectory, "permutations.py")
 
-      permutationsPyContents = open(permutationsPyPath, 'r').read()
-      descriptionPyContents = open(descriptionPyPath, 'r').read()
+      permutationsPyContents = open(permutationsPyPath, 'rb').read()
+      descriptionPyContents = open(descriptionPyPath, 'rb').read()
 
       jobParams = {'persistentJobGUID' : generatePersistentJobGUID(),
                    'permutationsPyContents': permutationsPyContents,
@@ -428,14 +429,8 @@ class ExperimentTestBaseClass(HelperTestCaseBase):
     if env is not None and len(env) > 0:
       envItems = []
       for (key, value) in env.iteritems():
-        if (sys.platform.startswith('win')):
-          envItems.append("set \"%s=%s\"" % (key, value))
-        else:
-          envItems.append("export %s=%s" % (key, value))
-      if (sys.platform.startswith('win')):
-        envStr = "%s &" % (' & '.join(envItems))
-      else:
-        envStr = "%s;" % (';'.join(envItems))
+        envItems.append("export %s=%s" % (key, value))
+      envStr = "%s;" % (';'.join(envItems))
     else:
       envStr = ''
 

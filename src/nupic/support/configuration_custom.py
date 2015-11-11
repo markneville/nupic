@@ -45,9 +45,8 @@ class Configuration(ConfigurationBase):
 
   If the environment variable 'NTA_CONF_PATH' is defined, then the configuration
   files are expected to be in the NTA_CONF_PATH search path, which is a ':'
-  separated list of directories (on Windows the seperator is a ';').
-  If NTA_CONF_PATH is not defined, then it is assumed to be NTA/conf/default
-  (typically ~/nupic/current/conf/default).
+  separated list of directories. If NTA_CONF_PATH is not defined, then it is
+  assumed to be NTA/conf/default (typically ~/nupic/current/conf/default).
   """
 
 
@@ -216,7 +215,7 @@ class _CustomConfigurationFileWrapper(object):
     configFilePath = cls.getPath()
 
     try:
-      with open(configFilePath, 'r') as fp:
+      with open(configFilePath, 'rb') as fp:
         contents = fp.read()
     except IOError, e:
       if e.errno != errno.ENOENT:
